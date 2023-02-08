@@ -1,15 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Word Fake</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
 
 <body>
-
+    <script src="scripts/TextAreaWithStyles.js"></script>
+    <script>
+        fetch("config.json")
+            .then(response => response.json())
+            .then(data => {
+                const textAreaWithStyles = new TextAreaWithStyles(data);
+                textAreaWithStyles.render();
+            })
+            .catch(error => console.error(error));
+    </script>
 </body>
 
 </html>
