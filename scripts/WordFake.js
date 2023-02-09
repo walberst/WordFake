@@ -31,38 +31,16 @@ class WordFake {
         this.textArea.value = this.overlayDivs[this.currentDiv].innerHTML;
         const { paper, notepad } = this.styles;
         if (this.getHeightString(this.overlayDivs[this.currentDiv].innerHTML) > ((paper.A4.height * notepad.scale) / 100 - (paper.margin.bottom * notepad.scale) / 100) + 10) {
-            this.splitText();
+            this.addPage()
         }
     }
 
     createNewOverlayDiv(index) {
-        this.overlayDivs[this.currentDiv] = document.createElement("div");
-        this.overlayDivs[this.currentDiv].className = `overlayDiv`;
-        this.overlayDivs[this.currentDiv].contentEditable = true;
-        this.notepad.appendChild(this.overlayDivs[this.currentDiv]);
+        this.overlayDivs[index] = document.createElement("div");
+        this.overlayDivs[index].className = `overlayDiv`;
+        this.overlayDivs[index].contentEditable = true;
+        this.notepad.appendChild(this.overlayDivs[index]);
         this.applyStyles();
-    }
-
-    splitText() {
-        const { paper, notepad } = this.styles;
-        let currentText = this.overlayDivs[this.currentDiv].innerHTML;
-        let currentHeight = this.getHeightString(currentText);
-        let limitHeight = ((paper.A4.height * notepad.scale) / 100 - (paper.margin.bottom * notepad.scale) / 100) + 10;
-        let splitIndex = 0;
-
-        while (currentHeight > limitHeight) {
-            splitIndex = currentText.lastIndexOf(" ", splitIndex - 1);
-            currentText = currentText.slice(0, splitIndex);
-            currentHeight = this.getHeightString(currentText);
-        }
-
-        this.overlayDivs[this.currentDiv].innerHTML = currentText;
-        this.currentDiv++;
-        this.createNewOverlayDiv(this.currentDiv);
-        if (this.currentDiv == this.currentDiv.length - 1) {
-            this.overlayDivs[this.currentDiv].innerHTML = this.textArea.value.slice(splitIndex);
-            this.overlayDivs[this.currentDiv].focus();
-        }
     }
 
     getWidthString(text) {
@@ -87,12 +65,104 @@ class WordFake {
         return testWidth;
     }
 
+    addPage() {
+        this.currentDiv = this.overlayDivs.length;
+        this.createNewOverlayDiv(this.currentDiv);
+        this.overlayDivs[this.currentDiv].focus();
+    }
+
+    removePage() {
+        if (this.overlayDivs.length > 1) {
+            this.notepad.removeChild(this.overlayDivs[this.currentDiv]);
+            this.overlayDivs.splice(this.currentDiv, 1);
+            this.currentDiv = Math.max(0, this.currentDiv - 1);
+            this.updateOverlayDiv();
+        }
+    }
+
+    save() {
+        localStorage.setItem("WordFake", JSON.stringify({
+            styles: this.styles,
+            text: this.getText(),
+            currentDiv: this.currentDiv
+        }));
+    }
+
+    load() {
+        const data = JSON.parse(localStorage.getItem("WordFake"));
+        if (data) {
+            this.styles = data.styles;
+            this.currentDiv = data.currentDiv;
+            this.setText(data.text);
+        }
+    }
+
+    print() {
+        window.print();
+    }
+
+    getCurrentPage() {
+        return this.currentDiv + 1;
+    }
+
+    getText() {
+        return this.textArea.value;
+    }
+
+    setText(text) {
+        this.textArea.value = text;
+        this.overlayDivs[this.currentDiv].innerHTML = text;
+        this.updateOverlayDiv();
+    }
+
     changePage(index) {
         this.currentDiv = index;
     }
 
     getNumPages() {
         return this.overlayDivs.length;
+    }
+
+    switchPaper(paper) {
+        this.styles.paper = paper;
+        this.applyStyles();
+    }
+
+    switchScale(scale) {
+        this.styles.notepad.scale = scale;
+        this.applyStyles();
+    }
+
+    changeBackgroundColor(color) {
+        this.notepad.style.backgroundColor = color;
+    }
+
+    changeFontColor(color) {
+        this.textArea.style.color = color;
+        this.overlayDivs.forEach(div => {
+            div.style.color = color;
+        });
+    }
+
+    changeFontSize(size) {
+        this.textArea.style.fontSize = size;
+        this.overlayDivs.forEach(div => {
+            div.style.fontSize = size;
+        });
+    }
+
+    changeFontFamily(fontFamily) {
+        this.textArea.style.fontFamily = fontFamily;
+        this.overlayDivs.forEach(div => {
+            div.style.fontFamily = fontFamily;
+        });
+    }
+
+    changeTextAlignment(align) {
+        this.textArea.style.textAlign = align;
+        this.overlayDivs.forEach(div => {
+            div.style.textAlign = align;
+        });
     }
 
     applyStyles() {
