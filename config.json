@@ -1,21 +1,23 @@
 {
     "paper": {
         "A4": {
-            "width": 789,
-            "height": 1587
+            "width": 793,
+            "height": 1122
+        },
+        "margin": {
+            "left": 25,
+            "right": 25,
+            "top": 25,
+            "bottom": 25
         }
     },
-    "border": {
-        "left": 25,
-        "right": 25,
-        "top": 25,
-        "bottom": 25
-    },
-    "measurement": "px",
     "notepad": {
         "color": "#ddd",
         "pageBorderColor": "#aaa",
         "pageBorderStyle": "solid",
-        "pageBorderWidth": 1
+        "pageBorderWidth": 1,
+        "scale": 100,
+        "measurement": "px"
     }
+
 }
