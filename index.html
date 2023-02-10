@@ -16,12 +16,13 @@
 </head>
 
 <body>
+    <section id="container"></section>
     <script src="scripts/WordFake.js"></script>
     <script>
         fetch("config.json")
             .then(response => response.json())
             .then(data => {
-                const wordFake = new WordFake(data);
+                const wordFake = new WordFake(data, document.getElementById("container"));
                 wordFake.render();
             })
             .catch(error => console.error(error));

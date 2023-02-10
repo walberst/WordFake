@@ -1,5 +1,5 @@
 class WordFake {
-    constructor(styles) {
+    constructor(styles, container = null) {
         this.styles = styles;
         this.textArea = document.createElement("textarea");
         this.textArea.hidden = true;
@@ -9,29 +9,49 @@ class WordFake {
         this.overlayDivs[0].className = "overlayDiv";
         this.overlayDivs[0].contentEditable = true;
         this.currentDiv = 0;
+        if (!container) {
+            container = document.querySelector("body");
+        }
+        this.container = container;
     }
 
     render() {
         this.applyStyles();
         for (let i = 0; i < this.overlayDivs.length; i++) {
-            this.overlayDivs[i].addEventListener("click", () => {
-                this.changePage(i);
-            });
-            this.overlayDivs[i].addEventListener("input", () => {
-                this.textArea.value = this.overlayDivs[this.currentDiv].innerHTML;
-                this.updateOverlayDiv();
-            });
+            this.createNewOverlayDiv(i)
             this.notepad.appendChild(this.overlayDivs[i]);
         }
         this.notepad.appendChild(this.textArea);
-        document.body.appendChild(this.notepad);
+        this.container.appendChild(this.notepad);
     }
 
     updateOverlayDiv() {
         this.textArea.value = this.overlayDivs[this.currentDiv].innerHTML;
         const { paper, notepad } = this.styles;
         if (this.getHeightString(this.overlayDivs[this.currentDiv].innerHTML) > ((paper.A4.height * notepad.scale) / 100 - (paper.margin.bottom * notepad.scale) / 100) + 10) {
-            this.addPage()
+            if (this.currentDiv == this.overlayDivs.length - 1) {
+                this.addPage()
+            }
+        }
+    }
+
+    reorganizePage(index) {
+        const { paper, notepad } = this.styles;
+        let maxHeight = ((paper.A4.height * notepad.scale) / 100 - (paper.margin.bottom * notepad.scale) / 100) + 10;
+        for (let i = index; i < (this.overlayDivs.length - index); i++) {
+            let currrentText = this.overlayDivs[i].innerHTML.replaceAll("</div>", " </div>");
+            let currentTextHeight = this.getHeightString(currrentText);
+            while (currentTextHeight > maxHeight) {
+                let arrayText = currrentText.split(' ');
+                let next = arrayText.pop();
+                currrentText = arrayText.join(' ');
+                if (i == this.overlayDivs.length - 1) {
+                    this.addPage(false);
+                }
+                this.overlayDivs[i + 1].innerHTML = next + ' ' + this.overlayDivs[i + 1].innerHTML;
+                currentTextHeight = this.getHeightString(currrentText);
+            }
+            this.overlayDivs[i].innerHTML = currrentText;
         }
     }
 
@@ -41,6 +61,27 @@ class WordFake {
         this.overlayDivs[index].contentEditable = true;
         this.notepad.appendChild(this.overlayDivs[index]);
         this.applyStyles();
+
+        this.overlayDivs[index].addEventListener("blur", () => {
+            this.reorganizePage(index);
+        });
+
+        let timer;
+        this.overlayDivs[index].addEventListener("keyup", () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                this.overlayDivs[index].blur();
+            }, 3000);
+        });
+
+        this.overlayDivs[index].addEventListener("click", () => {
+            this.changePage(index);
+        });
+
+        this.overlayDivs[index].addEventListener("input", () => {
+            this.textArea.value = this.overlayDivs[this.currentDiv].innerHTML;
+            this.updateOverlayDiv();
+        });
     }
 
     getWidthString(text) {
@@ -48,27 +89,32 @@ class WordFake {
         tempSpan.style.display = 'inline-block';
         tempSpan.style.wordWrap = 'break-word';
         tempSpan.innerHTML = text;
-        document.body.appendChild(tempSpan);
+        this.container.appendChild(tempSpan);
         const testWidth = tempSpan.offsetWidth;
         tempSpan.remove();
         return testWidth;
     }
 
     getHeightString(text) {
+        const { paper, notepad } = this.styles;
+        let width = ((paper.A4.width * notepad.scale) / 100) - ((paper.margin.left * notepad.scale) / 100) - ((paper.margin.right * notepad.scale) / 100);
         const tempSpan = document.createElement('span');
+        tempSpan.style.width = `${width}${notepad.measurement}`;
         tempSpan.style.display = 'inline-block';
         tempSpan.style.wordWrap = 'break-word';
         tempSpan.innerHTML = text;
-        document.body.appendChild(tempSpan);
+        this.container.appendChild(tempSpan);
         const testWidth = tempSpan.offsetHeight;
         tempSpan.remove();
         return testWidth;
     }
 
-    addPage() {
+    addPage(focus = true) {
         this.currentDiv = this.overlayDivs.length;
         this.createNewOverlayDiv(this.currentDiv);
-        this.overlayDivs[this.currentDiv].focus();
+        if (focus) {
+            this.overlayDivs[this.currentDiv].focus();
+        }
     }
 
     removePage() {
